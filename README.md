@@ -1,17 +1,14 @@
 ## RNBGActions
-[My widget description]
+React native background actions : Mendix plugabble native widget to enable background actions. 
 
 ## Features
-[feature highlights]
+Possibility to run action once / repeatedly with intervals. Actions run asynchronously in background.
 
 ## Usage
-[step by step instructions]
-
-## Demo project
-[link to sandbox]
+Import the widget in your mendix project.
 
 ## Issues, suggestions and feature requests
-[link to GitHub issues]
+--
 
 ## Development and contribution
 
@@ -21,4 +18,4 @@
     - the bundle will be included in a `dist` folder in the root directory of the project;
     - the bundle will be included in the `deployment` and `widgets` folder of the Mendix test project.
 
-[specify contribution]
+Kshitij Karandikar
