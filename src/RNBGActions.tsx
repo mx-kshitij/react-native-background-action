@@ -6,19 +6,21 @@ import { RNBGActionsProps } from "../typings/RNBGActionsProps";
 import { ActionValue } from "mendix";
 import { Style } from "@mendix/pluggable-widgets-tools";
 import { Platform, Linking } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 import BackgroundJob from 'react-native-background-actions';
 
 const sleep = (time: any) => new Promise<void>((resolve) => setTimeout(() => resolve(), time));
 
 let action: ActionValue;
 
+// let taskStorageName: string;
+
 BackgroundJob.on('expiration', () => {
     console.log('iOS: I am being closed!');
 });
- 
+
 const taskRunOnce = async () => {       //Define the function to be run once
-    
+
     // console.log('Reached function');
     if (Platform.OS === 'ios') {
         console.warn(
@@ -36,7 +38,7 @@ const taskRunOnce = async () => {       //Define the function to be run once
 };
 
 const taskRepeat = async (taskData: { delay: any; }) => {
-    
+
     // console.log('Reached function');
     if (Platform.OS === 'ios') {
         console.warn(
@@ -96,40 +98,53 @@ export class RNBGActions extends Component<RNBGActionsProps<CustomStyle>, any> {
         this.stopBackgroundTask = this.stopBackgroundTask.bind(this);
 
         action = this.props.action!;
+
+        // taskStorageName = "background-tasks-custom";
     };
 
-    checkIfTaskTriggered = (taskName: string) => {
+    // checkIfTaskTriggered = (taskName: string) => {
 
-        const taskStorage = AsyncStorage.getItem("background-tasks-custom");
+    //     const taskStorage = AsyncStorage.getItem(taskStorageName);
+    //     console.log('Checking task : ' + taskName);
 
-        if (taskStorage !== null) {
-            const tasksRunning = taskStorage.toString();
+    //     if (taskStorage !== null) {
+    //         const tasksRunning = taskStorage;
 
-            if (tasksRunning.includes(taskName)) {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-        else {
-            AsyncStorage.setItem("background-tasks-custom", "");
-        }
-    };
+    //         console.log('Task storage found');
+    //         console.log('Tasks running : ' + tasksRunning);
 
-    setBackgroundTaskName = (taskName: string) => {
-        const taskStorage = AsyncStorage.getItem("background-tasks-custom");
+    //         if (tasksRunning.includes(taskName)) {
+    //             console.log('Task ' + taskName + ' already running.');
+    //             return true;
+    //         }
+    //         else {
+    //             console.log('Task ' + taskName + ' not running.');
+    //             return false;
+    //         }
+    //     }
+    //     else {
+    //         console.log('Task storage not found. Created');
+    //         AsyncStorage.setItem(taskStorageName, "");
+    //     }
+    // };
 
-        let tasksRunning = taskStorage.toString();
-        if (tasksRunning == "") {
-            tasksRunning = taskName;
-        }
-        else {
-            tasksRunning = tasksRunning + ';' + taskName;
-        }
+    // setBackgroundTaskName = (taskName: string) => {
+    //     const taskStorage = AsyncStorage.getItem(taskStorageName);
 
-        AsyncStorage.setItem("background-tasks-custom", tasksRunning);
-    };
+    //     console.log('Task storage not found. Created');
+
+    //     let tasksRunning = taskStorage.toString();
+    //     if (tasksRunning == "") {
+    //         tasksRunning = taskName;
+    //     }
+    //     else {
+    //         tasksRunning = tasksRunning + ';' + taskName;
+    //     }
+
+    //     console.log('Tasks running : ' + tasksRunning);
+
+    //     AsyncStorage.setItem(taskStorageName, tasksRunning);
+    // };
 
     initiateBackgroundTask = async () => {
 
@@ -137,22 +152,31 @@ export class RNBGActions extends Component<RNBGActionsProps<CustomStyle>, any> {
             options.parameters.delay = this.props.repeatInterval;
         }
 
+        const isRunning = BackgroundJob.isRunning();
+
         try {
             console.log('Trying to start background service');
             const taskName = options.taskName;
 
             if (this.props.runOnce) {
-                await BackgroundJob.start(taskRunOnce, options);
-                console.log('Running process with identifier : "' + taskName + '".');
-            }
-            else {
-                if (!this.checkIfTaskTriggered(taskName)) {
-                    await BackgroundJob.start(taskRepeat, options);
-                    this.setBackgroundTaskName(taskName);
+                if (!isRunning) {
+                    await BackgroundJob.start(taskRunOnce, options);
                     console.log('Running process with identifier : "' + taskName + '".');
                 }
                 else {
-                    console.log('Duplicate task : Did not start. Another process with this identifier : "' + taskName + '" already running.');
+                    console.log("Failed to start. Another process already running.");
+                }
+            }
+            else {
+                // if (!this.checkIfTaskTriggered(taskName)) {
+                if (!isRunning) {
+                    await BackgroundJob.start(taskRepeat, options);
+                    // this.setBackgroundTaskName(taskName);
+                    console.log('Running process with identifier : "' + taskName + '".');
+                }
+                else {
+                    // console.log('Duplicate task : Did not start. Another process with this identifier : "' + taskName + '" already running.');
+                    console.log("Failed to start. Another process already running.");
                 }
             }
             console.log('Successful start!');
@@ -165,14 +189,14 @@ export class RNBGActions extends Component<RNBGActionsProps<CustomStyle>, any> {
 
         console.log('Stopping background service');
         await BackgroundJob.stop();
-    
+
     };
 
     componentDidMount() {                     // Run once when widget is mounted
 
         this.updateComponentOptions();        // Update options for background action
         this.initiateBackgroundTask();        // Start the background action
-    
+
     };
 
     componentWillUnmount() {
@@ -190,7 +214,7 @@ export class RNBGActions extends Component<RNBGActionsProps<CustomStyle>, any> {
         options.taskDesc = this.props.taskDesc;
         options.linkingURI = this.props.linkingURI;
         options.color = this.props.notificationColor;
-    
+
     };
 
     render() {
